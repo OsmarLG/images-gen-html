@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Creativo | Generador de Activos Web con IA</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script type="module" src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* Tailwind blue-500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1f2937; /* Gray-800 */
+            color: #f3f4f6; /* Gray-100 */
+            transition: all 0.3s ease;
+        }
+        .container-card {
+            background-color: #374151; /* Gray-700 */
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .ai-input-focus:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .image-card {
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            border: 3px solid transparent;
+        }
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+        .image-card.selected {
+            border-color: #facc15; /* Tailwind amber-400 */
+            box-shadow: 0 0 20px rgba(250, 202, 21, 0.5);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #f3f4f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Estilo para el checkbox */
+        .custom-checkbox:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .loading-image-placeholder {
+            height: 12rem; /* h-48 */
+            background-color: #4b5563; /* Gray-600 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex flex-col items-center">
+
+    <!-- Encabezado -->
+    <header class="text-center mb-8">
+        <h1 class="text-5xl font-extrabold tracking-tight text-white mb-2">Nexus Creativo</h1>
+        <p class="text-xl text-gray-400">El motor de IA para los activos visuales de tu web.</p>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div id="main-app" class="w-full max-w-6xl container-card p-6 sm:p-10">
+
+        <!-- Área de Input y Generación -->
+        <section id="input-section" class="mb-10 p-6 bg-gray-600/50 rounded-xl">
+            <h2 class="text-2xl font-semibold mb-4 text-white flex items-center">
+                <i data-lucide="sparkles" class="w-6 h-6 mr-2 text-yellow-400"></i>
+                Define el Ámbito de tu Web
+            </h2>
+            <form id="generation-form" class="space-y-6">
+                <textarea id="theme-input" 
+                          class="w-full p-4 text-lg bg-gray-700 rounded-lg border-2 border-gray-600 ai-input-focus resize-none text-white placeholder-gray-400" 
+                          rows="3" 
+                          placeholder="Ej: Una tienda de velas artesanales inspiradas en viajes por el Mediterráneo, con un toque minimalista y tonos tierra."
+                          required></textarea>
+                
+                <!-- Opciones Avanzadas (Cantidad y Tipos) -->
+                <div class="bg-gray-700 p-4 rounded-lg space-y-4">
+                    <h3 class="text-xl font-medium text-white flex items-center">
+                        <i data-lucide="settings-2" class="w-5 h-5 mr-2 text-blue-300"></i>
+                        Opciones Avanzadas
+                    </h3>
+                    
+                    <!-- Cantidad y Estilo -->
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <div class="flex-grow">
+                            <label for="quantity-input" class="block text-sm font-medium text-gray-300 mb-1">Cantidad de Imágenes (1-8)</label>
+                            <input type="number" id="quantity-input" value="4" min="1" max="8" required
+                                class="w-full p-3 bg-gray-800 rounded-lg border-2 border-gray-600 ai-input-focus text-white">
+                        </div>
+                        <div class="flex-grow">
+                            <label for="style-select" class="block text-sm font-medium text-gray-300 mb-1">Estilo Visual</label>
+                            <select id="style-select" class="w-full p-3 bg-gray-800 rounded-lg border-2 border-gray-600 text-white ai-input-focus">
+                                <option value="photo-realistic, high detail">Fotorrealista, Alto Detalle</option>
+                                <option value="minimalist, flat design, vector">Minimalista, Diseño Plano</option>
+                                <option value="sci-fi, neon, cyberpunk">Ciencia Ficción, Neon</option>
+                                <option value="watercolor painting, vibrant colors">Acuarela, Colores Vivos</option>
+                                <option value="3D render, soft lighting">Render 3D, Iluminación Suave</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Tipos de Activos -->
+                    <div>
+                        <p class="block text-sm font-medium text-gray-300 mb-2">Selecciona los Tipos de Activos a Generar (Mínimo 1):</p>
+                        <div id="asset-types-container" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <!-- Checkboxes de tipos de activo -->
+                            <label class="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="asset_type" value="Logo" checked class="custom-checkbox h-5 w-5 rounded focus:ring-blue-500">
+                                <span class="text-white">Logo</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="asset_type" value="Encabezado" checked class="custom-checkbox h-5 w-5 rounded focus:ring-blue-500">
+                                <span class="text-white">Encabezado</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="asset_type" value="Fondo" checked class="custom-checkbox h-5 w-5 rounded focus:ring-blue-500">
+                                <span class="text-white">Fondo / Patrón</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="asset_type" value="Icono/Producto" checked class="custom-checkbox h-5 w-5 rounded focus:ring-blue-500">
+                                <span class="text-white">Icono / Producto</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botón de Generación -->
+                <button type="submit" id="generate-button" 
+                        class="w-full px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold rounded-lg transition duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center">
+                    <i data-lucide="zap" class="w-6 h-6 mr-2"></i>
+                    Generar Activos
+                </button>
+            </form>
+            <p id="error-message" class="text-red-400 mt-3 hidden"></p>
+        </section>
+
+        <!-- Área de Resultados y Descarga -->
+        <section id="results-section">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-white flex items-center">
+                    <i data-lucide="layout-grid" class="w-6 h-6 mr-2 text-blue-400"></i>
+                    Resultados de la IA
+                </h2>
+                <button id="download-selected-button" 
+                        class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition duration-200 disabled:bg-gray-500 disabled:cursor-not-allowed hidden"
+                        disabled>
+                    <i data-lucide="download" class="w-5 h-5 inline-block mr-1"></i>
+                    Descargar Seleccionadas (0)
+                </button>
+            </div>
+            
+            <!-- Galería de Imágenes -->
+            <div id="image-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <p id="placeholder-message" class="col-span-full text-center text-gray-500 py-10">
+                    Introduce el ámbito de tu web y haz clic en "Generar" para crear activos visuales.
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts de Firebase (Estructura Requerida) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase (OBLIGATORIO)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let app, db, auth;
+        let userId = null;
+
+        setLogLevel('Debug');
+
+        window.onload = async function() {
+            try {
+                if (Object.keys(firebaseConfig).length) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            console.log("Usuario autenticado con UID:", userId);
+                        } else {
+                            // Intento de autenticación anónima si no hay token
+                            signInAnonymously(auth).then(cred => {
+                                userId = cred.user.uid;
+                                console.log("Usuario anónimo autenticado con UID:", userId);
+                            }).catch(error => {
+                                console.error("Error al autenticar anónimamente:", error);
+                            });
+                        }
+                    });
+
+                    if (token) {
+                        await signInWithCustomToken(auth, token);
+                    }
+                } else {
+                    console.warn("Firebase Config no está disponible. La aplicación continuará, pero las funciones de DB no funcionarán.");
+                    userId = crypto.randomUUID(); // Usar UUID si no hay Firebase
+                }
+            } catch (error) {
+                console.error("Error de inicialización de Firebase:", error);
+                userId = crypto.randomUUID();
+            }
+        };
+
+        // ===============================================
+        // Lógica de la Aplicación
+        // ===============================================
+        
+        const API_KEY = "";
+        const MAX_RETRIES = 5;
+        const IMAGE_PREDICT_URL = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict";
+
+        // Definición de las plantillas de prompts por tipo de activo
+        const PROMPT_TEMPLATES = {
+            'Logo': "Concepto de logotipo abstracto, composición centrada, colores vibrantes, simple, fondo blanco, ", 
+            'Encabezado': "Imagen de encabezado (hero image) para un sitio web, formato panorámico 16:9, iluminación suave, sin texto, ", 
+            'Fondo': "Patrón de fondo sutil y repetible, abstracto, ideal para una sección, seamless, ", 
+            'Icono/Producto': "Icono o miniatura de producto/servicio, enfoque cercano (close-up), detalles precisos, fondo blanco, " 
+        };
+
+        // Elementos del DOM
+        const form = document.getElementById('generation-form');
+        const themeInput = document.getElementById('theme-input');
+        const styleSelect = document.getElementById('style-select');
+        const quantityInput = document.getElementById('quantity-input');
+        const generateButton = document.getElementById('generate-button');
+        const imageGallery = document.getElementById('image-gallery');
+        const downloadSelectedButton = document.getElementById('download-selected-button');
+        const errorMessage = document.getElementById('error-message');
+        const placeholderMessage = document.getElementById('placeholder-message');
+        
+        // Almacenamiento de imágenes generadas (base64)
+        let generatedImages = [];
+
+        /**
+         * Actualiza el estado del botón de descarga seleccionada.
+         */
+        function updateDownloadButton() {
+            const selectedCount = generatedImages.filter(img => img.selected).length;
+            downloadSelectedButton.textContent = `Descargar Seleccionadas (${selectedCount})`;
+            downloadSelectedButton.disabled = selectedCount === 0;
+            if (generatedImages.length > 0) {
+                 downloadSelectedButton.classList.remove('hidden');
+            } else {
+                downloadSelectedButton.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Simula una espera con retroceso exponencial.
+         * @param {number} attempt El intento actual.
+         */
+        function sleep(attempt) {
+            const delay = Math.pow(2, attempt) * 100 + Math.random() * 100;
+            return new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        /**
+         * Llama a la API de Imagen para generar el contenido.
+         * @param {string} prompt El prompt de texto para la IA.
+         * @returns {Promise<string|null>} La imagen Base64 o null en caso de error.
+         */
+        async function callImageGenerationAPI(prompt) {
+            const payload = { 
+                instances: { prompt: prompt }, 
+                parameters: { "sampleCount": 1 } 
+            };
+            
+            const apiUrl = `${IMAGE_PREDICT_URL}?key=${API_KEY}`;
+            
+            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) {
+                        await sleep(attempt);
+                        continue;
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status} - ${await response.text().substring(0, 100)}...`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        return result.predictions[0].bytesBase64Encoded;
+                    } else {
+                        throw new Error("Respuesta de IA vacía o incompleta.");
+                    }
+
+                } catch (error) {
+                    if (attempt === MAX_RETRIES - 1) {
+                         console.error(`Intento ${attempt + 1} fallido (final):`, error);
+                         return null;
+                    }
+                    console.error(`Intento ${attempt + 1} fallido, reintentando:`, error);
+                    await sleep(attempt);
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Crea un placeholder de carga y lo devuelve.
+         * @param {string} name Nombre del activo.
+         * @returns {HTMLElement} El elemento de tarjeta de carga.
+         */
+        function createLoadingCard(name) {
+            const card = document.createElement('div');
+            card.className = 'image-card rounded-xl bg-gray-600/50 p-3 flex flex-col transition duration-300 relative';
+            card.innerHTML = `
+                <div class="loading-image-placeholder">
+                    <div class="spinner"></div>
+                </div>
+                <div class="p-2 text-center text-gray-300">Generando: ${name}...</div>
+            `;
+            imageGallery.appendChild(card);
+            return card;
+        }
+
+        /**
+         * Reemplaza el placeholder con la imagen generada.
+         * @param {HTMLElement} card El elemento de tarjeta de placeholder.
+         * @param {string} base64Image Datos de la imagen en base64.
+         * @param {string} name Nombre para el archivo de descarga.
+         * @param {number} index Índice en el array `generatedImages`.
+         */
+        function updateCardWithImage(card, base64Image, name, index) {
+            const imageUrl = `data:image/png;base64,${base64Image}`;
+            
+            // Reemplaza el contenido del placeholder
+            card.innerHTML = `
+                <div class="absolute top-2 right-2 z-10">
+                    <input type="checkbox" id="check-${index}" class="custom-checkbox h-6 w-6 rounded focus:ring-amber-500 opacity-90 cursor-pointer transition duration-150 transform hover:scale-110">
+                </div>
+                <img src="${imageUrl}" alt="${name}" class="w-full h-48 object-cover rounded-lg mb-3 shadow-md" data-index="${index}">
+                <div class="p-2 text-center text-gray-300 font-medium">${name}</div>
+            `;
+
+            const checkbox = card.querySelector(`#check-${index}`);
+            const imageElement = card.querySelector('img');
+
+            // Lógica de selección
+            const toggleSelection = () => {
+                const isSelected = checkbox.checked;
+                generatedImages[index].selected = isSelected;
+                card.classList.toggle('selected', isSelected);
+                updateDownloadButton();
+            };
+
+            // Evento para el checkbox
+            checkbox.addEventListener('change', toggleSelection);
+            
+            // Evento para hacer clic en la imagen (también selecciona)
+            imageElement.addEventListener('click', () => {
+                checkbox.checked = !checkbox.checked;
+                toggleSelection();
+            });
+
+            // Asegurar que el estado inicial se registre
+            generatedImages[index] = { name, data: base64Image, selected: false };
+            updateDownloadButton();
+
+            lucide.createIcons(); // Recarga los íconos de Lucide
+        }
+
+        /**
+         * Dispara la descarga de una imagen individual.
+         * @param {string} dataUrl La URL de datos (Base64).
+         * @param {string} filename Nombre de archivo sugerido.
+         */
+        function downloadImage(dataUrl, filename) {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        /**
+         * Descarga solo las imágenes seleccionadas.
+         */
+        function downloadSelectedImages() {
+            const selectedImages = generatedImages.filter(img => img.selected);
+            if (selectedImages.length === 0) {
+                 // Usar un modal simple o un mensaje en lugar de alert
+                 alert('Por favor, selecciona al menos una imagen para descargar.');
+                 return;
+            }
+            
+            // NOTA: Se usa una solución de descarga secuencial simple, no un ZIP real.
+            // Para ZIP real, se requeriría una librería externa o backend.
+            selectedImages.forEach((img, index) => {
+                const imageUrl = `data:image/png;base64,${img.data}`;
+                // Pequeño retraso para que el navegador procese los pop-ups
+                setTimeout(() => {
+                    downloadImage(imageUrl, `activo_web_${img.name.replace(/[^a-z0-9]/gi, '_')}_${index + 1}.png`);
+                }, 500 * (index + 1)); 
+            });
+        }
+        
+        // Asignar el evento al botón de descarga múltiple
+        downloadSelectedButton.onclick = downloadSelectedImages;
+
+        /**
+         * Función principal que maneja el envío del formulario.
+         * @param {Event} event El evento de envío.
+         */
+        async function handleGeneration(event) {
+            event.preventDefault();
+            errorMessage.classList.add('hidden');
+            generatedImages = [];
+            imageGallery.innerHTML = '';
+            placeholderMessage.classList.add('hidden');
+            updateDownloadButton(); // Ocultar o resetear botón de descarga
+
+            const userTheme = themeInput.value.trim();
+            const selectedStyle = styleSelect.value;
+            const quantity = parseInt(quantityInput.value, 10);
+            
+            const selectedTypes = Array.from(document.querySelectorAll('input[name="asset_type"]:checked'))
+                                       .map(el => el.value);
+
+            // Validaciones
+            if (!userTheme || selectedTypes.length === 0 || quantity < 1 || quantity > 8) {
+                errorMessage.textContent = "Por favor, completa todas las selecciones y verifica la cantidad.";
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // ===============================================
+            // Preparación de Prompts
+            // ===============================================
+            let tasks = [];
+            for (let i = 0; i < quantity; i++) {
+                const typeKey = selectedTypes[i % selectedTypes.length];
+                const name = `${typeKey} ${i + 1}`;
+                const template = PROMPT_TEMPLATES[typeKey];
+                
+                if (template) {
+                    tasks.push({
+                        prompt: `${template}${userTheme}, estilo: ${selectedStyle}`,
+                        name: name,
+                        index: i // Índice para identificar la imagen
+                    });
+                }
+            }
+
+            generateButton.disabled = true;
+
+            // Mapeo de índices a elementos de placeholder
+            const placeholderCards = tasks.map(task => createLoadingCard(task.name));
+
+            // ===============================================
+            // Generación Asíncrona (procesar a medida que llegan)
+            // ===============================================
+            
+            // Usaremos Promise.all con una estructura que lanza todas las llamadas
+            const generationPromises = tasks.map(async (task, i) => {
+                const base64Data = await callImageGenerationAPI(task.prompt);
+                
+                if (base64Data) {
+                    // Si la imagen se genera, actualizar la tarjeta de placeholder
+                    updateCardWithImage(placeholderCards[i], base64Data, task.name, i);
+                } else {
+                    // Si falla, mostrar un error en el placeholder
+                    placeholderCards[i].innerHTML = `
+                        <div class="loading-image-placeholder bg-red-800/50">
+                            <i data-lucide="alert-triangle" class="w-12 h-12 text-red-400"></i>
+                        </div>
+                        <div class="p-2 text-center text-red-400 font-medium">Error al generar: ${task.name}</div>
+                    `;
+                    lucide.createIcons();
+                }
+                return !!base64Data; // Devuelve true si fue exitoso
+            });
+
+            const results = await Promise.all(generationPromises);
+            
+            const successfulGenerations = results.filter(r => r).length;
+
+            if (successfulGenerations === 0) {
+                 placeholderMessage.textContent = "La IA no pudo generar ninguna imagen. Intenta un tema o estilo diferente.";
+                 placeholderMessage.classList.remove('hidden');
+            }
+
+
+            generateButton.disabled = false;
+        }
+
+        form.addEventListener('submit', handleGeneration);
+
+        // Inicializar iconos al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
+    </script>
+</body>
+</html>
