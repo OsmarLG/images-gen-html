@@ -1,0 +1,12 @@
+
+[build]
+  command = "echo 'No build command required'"
+  publish = "."
+
+[[plugins]]
+  package = "@netlify/plugin-find-and-replace"
+  [plugins.inputs]
+    files = ["index.html"]
+    [[plugins.inputs.replacements]]
+      find = "__GENERATIVE_LANGUAGE_API_KEY__"
+      replace = "${GENERATIVE_LANGUAGE_API_KEY}"

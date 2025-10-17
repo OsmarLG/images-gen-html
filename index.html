@@ -234,7 +234,7 @@
         // Lógica de la Aplicación
         // ===============================================
         
-        const API_KEY = "";
+        const API_KEY = typeof __GENERATIVE_LANGUAGE_API_KEY__ !== 'undefined' ? __GENERATIVE_LANGUAGE_API_KEY__ : "";
         const MAX_RETRIES = 5;
         const IMAGE_PREDICT_URL = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict";
 
